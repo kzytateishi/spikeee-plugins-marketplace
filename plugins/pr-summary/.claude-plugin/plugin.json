@@ -1,0 +1,18 @@
+{
+  "name": "pr-summary",
+  "version": "1.0.0",
+  "description": "Auto-generate pull request descriptions from git changes.",
+  "author": {
+    "name": "Kazuya Tateishi"
+  },
+  "homepage": "https://github.com/kzytateishi/claude-code-pr-summary",
+  "repository": "https://github.com/kzytateishi/claude-code-pr-summary",
+  "license": "MIT",
+  "keywords": [
+    "pull-request",
+    "pr",
+    "git",
+    "description",
+    "automation"
+  ]
+}

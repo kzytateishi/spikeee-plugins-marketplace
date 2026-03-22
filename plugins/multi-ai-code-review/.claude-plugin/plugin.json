@@ -1,0 +1,18 @@
+{
+  "name": "multi-ai-code-review",
+  "version": "1.0.0",
+  "description": "Comprehensive code review with dynamic multi-AI MCP integration.",
+  "author": {
+    "name": "Kazuya Tateishi"
+  },
+  "homepage": "https://github.com/kzytateishi/claude-code-multi-ai-code-review",
+  "repository": "https://github.com/kzytateishi/claude-code-multi-ai-code-review",
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "multi-ai",
+    "mcp",
+    "quality",
+    "security"
+  ]
+}

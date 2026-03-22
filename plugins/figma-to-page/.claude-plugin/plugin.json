@@ -1,0 +1,18 @@
+{
+  "name": "figma-to-page",
+  "version": "1.0.0",
+  "description": "Perfect UI implementation from Figma with Playwright QA.",
+  "author": {
+    "name": "Kazuya Tateishi"
+  },
+  "homepage": "https://github.com/kzytateishi/figma-to-page",
+  "repository": "https://github.com/kzytateishi/figma-to-page",
+  "license": "MIT",
+  "keywords": [
+    "figma",
+    "mcp",
+    "playwright",
+    "frontend",
+    "design-implementation"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "dev-workflow",
+  "version": "1.0.1",
+  "description": "Complete development workflow — from specification to PR creation.",
+  "author": {
+    "name": "Kazuya Tateishi"
+  },
+  "homepage": "https://github.com/kzytateishi/claude-code-dev-workflow",
+  "repository": "https://github.com/kzytateishi/claude-code-dev-workflow",
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "specification",
+    "implementation",
+    "refactoring",
+    "code-review",
+    "pr-summary"
+  ]
+}
