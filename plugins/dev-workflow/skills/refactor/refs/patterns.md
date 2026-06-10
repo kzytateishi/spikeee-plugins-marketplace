@@ -31,6 +31,10 @@ Language-agnostic refactoring patterns for reference during iterative refactorin
 | Missing Error Handling | Bare try/catch or ignored errors | Proper error handling per project patterns |
 | Primitive Obsession | Using strings for domain concepts | Value objects, enums, or typed wrappers |
 | Implicit Dependencies | Hardcoded dependencies | Dependency injection or configuration |
+| Enum Literal | `status.to_sym == :guest`, `"guest"`, `:round_robin` in specs | Typed accessor / predicate (`status.guest?`, `Model.column.value`) |
+| Reinvented Helper | New inline logic duplicating an existing helper/scope/predicate | Reuse the existing helper/scope/predicate |
+| Sibling Divergence | Concept coded differently than the neighboring file | Match the local idiom (factories, scopes, error handling) |
+| Message ↔ Logic Drift | Copy says "confirmed" but code checks "any future" | Copy (and its test expectation) describes what the code enforces |
 
 ## Test Code Patterns
 

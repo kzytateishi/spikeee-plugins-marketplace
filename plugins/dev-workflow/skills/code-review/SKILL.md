@@ -26,6 +26,15 @@ All AI engines share these review perspectives:
 | Testing | Coverage gaps, coverage threshold compliance, test case sufficiency (normal/error/edge/boundary), edge cases |
 | Performance | Inefficient data fetching, memory leaks, unnecessary computation, algorithmic complexity |
 | Conventions | CLAUDE.md / AGENTS.md project convention compliance |
+| Consistency | PR description / commit messages / linked issue vs. the actual diff (claimed scope, definitions, DB impact, behavior all match the code) |
+
+> **These perspectives are necessary but not sufficient.** The specific, recurring findings
+> that automated PR reviewers (e.g. GitHub Copilot) flag — spec↔code mismatch, enum/constant
+> hardcoding, nil-on-nullable, time/range boundaries, get-or-insert races, missing indexes,
+> XSS escaping, weak test assertions — are operationalized in
+> [refs/high-signal-checklist.md](refs/high-signal-checklist.md). Applying that checklist is a
+> **required** part of Phase 3 (see 3.b). Catching these here is the whole point: it prevents
+> the post-PR review churn of fixing them one comment at a time.
 
 ## Phase 1: Collect Changes
 
@@ -48,6 +57,18 @@ git status --porcelain
 git log --oneline <base>...HEAD
 ```
 
+**PR description / intent (required for the Consistency perspective)**: capture the stated
+intent so the review can cross-check it against the diff (checklist category A).
+
+```bash
+# If a PR already exists for this branch:
+gh pr view --json title,body 2>/dev/null
+```
+
+If no PR exists yet, use the commit messages (`git log`) and the linked issue
+(Linear/Jira ID in the branch name or commits) as the statement of intent. Fetch the
+issue body if the tooling is available.
+
 **Large diff handling**: If `git diff --stat` shows more than 1000 lines changed or 30+ files, ask the user whether to review all changes or focus on specific directories/files.
 
 ### Prepare Review Context
@@ -61,6 +82,7 @@ Prepare the following context to pass to AI engines:
 - **diff**: full output of `git diff <base>...HEAD`
 - **file_list**: output of `git diff --name-only <base>...HEAD`
 - **commit_log**: output of `git log --oneline <base>...HEAD`
+- **intent**: PR title/body (or commit messages + linked issue) — the claims to verify
 - **conventions**: contents of CLAUDE.md and AGENTS.md (if present)
 
 ## Phase 2: Parallel AI Review (Dynamic MCP Detection)
@@ -107,6 +129,15 @@ Whether or not Phase 2 ran, Claude reviews the changes with focus on:
 - **Pattern consistency**: do changes follow existing codebase patterns?
 - **Integration risks**: how do changes interact with the rest of the system?
 - **Edge cases**: scenarios that automated tools commonly miss
+
+**Required: apply the high-signal checklist.** Walk the diff against **every** category in
+[refs/high-signal-checklist.md](refs/high-signal-checklist.md) — A. spec↔code consistency,
+B. enum/constant hardcoding, C. nil/nullable, D. time & range boundaries, E. concurrency &
+idempotency, F. indexes & query efficiency, G. web security & a11y, H. test rigor, I.
+message/i18n↔logic. Do not skim: for category A, take each claim in the captured intent and
+point at the line that proves or contradicts it. Report each hit as a finding with file,
+line, severity, and a concrete fix. This is the part of the review that pre-empts the
+findings an automated PR reviewer would otherwise post.
 
 ### c. Auto-Detect and Run Quality Gates
 

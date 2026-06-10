@@ -79,6 +79,20 @@ Read project conventions from CLAUDE.md and AGENTS.md if present.
 - [ ] Unify with existing codebase patterns
 - [ ] Apply language-specific best practices
 
+Operationalize this round with the concrete checks automated reviewers (e.g. GitHub
+Copilot) flag most often — don't leave it at "follow conventions":
+
+- [ ] **Enum / constant hardcoding** → replace bare literals with the codebase's typed
+      accessor or predicate (`status.guest?` not `status.to_sym == :guest`;
+      `Model.column.value` not `"value"`; reuse an enum member, not a string).
+- [ ] **Reinventing an existing helper / scope / predicate** → reuse the existing one.
+- [ ] **Pattern divergence from sibling files** (factories, scopes, error handling, test
+      setup) → match the local idiom.
+- [ ] **Message / label ↔ logic drift** → make user-facing copy describe what the code
+      actually does (and update the matching test expectation).
+
+See [refs/patterns.md](refs/patterns.md) "Convention Patterns" for before/after examples.
+
 ### Round N: Additional Improvements
 
 - [ ] Issues discovered in previous rounds
@@ -116,6 +130,16 @@ Continue iterating until ALL of the following are satisfied:
 - Refactor test code alongside source code
 - Do not add unnecessary comments
 - Reference [refs/patterns.md](refs/patterns.md) for common refactoring patterns
+
+### Surface correctness smells (don't silently pass)
+
+Refactoring is behavior-preserving, so do NOT fix logic bugs here. But while reading the
+code you will often notice the exact issues an automated PR reviewer would flag — a
+nullable column dereferenced without `Array()`, a `find_or_create_by!` with no race
+handling, a `Time.current` where a day boundary is meant, a half-open range missing its
+upper bound, a new filter column with no index, unescaped HTML. **Collect these in a
+"Needs review (not refactored)" list in the report** and hand them to `/code-review`
+instead of dropping them. Catching them now is what keeps them out of the PR comments.
 
 ## Refactoring Report
 

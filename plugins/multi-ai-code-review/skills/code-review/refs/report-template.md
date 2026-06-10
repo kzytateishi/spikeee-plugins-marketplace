@@ -12,6 +12,10 @@
 ### Recommendations
 {architecture_recommendations}
 
+## Spec ↔ Implementation Consistency
+For each claim in the PR description / commit messages / linked issue: VERIFIED or MISMATCH (with the contradicting line).
+{consistency_findings}
+
 ## Code Quality Review
 ### Security
 {security_findings}
@@ -19,6 +23,10 @@
 {quality_findings}
 ### Test Coverage
 {test_findings}
+
+## High-Signal Checklist Results
+Per-category outcome (A–I from refs/high-signal-checklist.md): findings or "clear".
+{high_signal_findings}
 
 ## Integrated Assessment
 ### Critical Issues
