@@ -1,6 +1,6 @@
 {
   "name": "dev-workflow",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Complete development workflow — from specification to PR creation.",
   "author": {
     "name": "Kazuya Tateishi"

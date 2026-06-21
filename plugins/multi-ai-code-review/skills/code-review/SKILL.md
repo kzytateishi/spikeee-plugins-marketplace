@@ -5,7 +5,7 @@ description: >
   Analyzes architecture, code quality, security, and test coverage.
   Dynamically detects and leverages available MCP servers for multi-perspective review.
   Use when reviewing code changes, before merging PRs, or for quality audits.
-effort: max
+effort: xhigh
 argument-hint: [branch-name]
 disable-model-invocation: true
 ---
