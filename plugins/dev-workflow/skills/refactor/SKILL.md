@@ -141,6 +141,12 @@ upper bound, a new filter column with no index, unescaped HTML. **Collect these 
 "Needs review (not refactored)" list in the report** and hand them to `/code-review`
 instead of dropping them. Catching them now is what keeps them out of the PR comments.
 
+Each entry on that list must clear the same bar a reported finding does
+([../code-review/refs/finding-bar.md](../code-review/refs/finding-bar.md)): **located**
+(`file:line`), **confident** (only what you can defend by pointing at the code — no
+"might be"), and **material**. Do not pad the list with speculative smells; an entry with
+no line and no concrete why is noise, not a hand-off.
+
 ## Refactoring Report
 
 After completion, generate a report following the format in [refs/report-template.md](refs/report-template.md).

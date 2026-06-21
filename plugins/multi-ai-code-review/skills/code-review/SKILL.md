@@ -14,9 +14,28 @@ disable-model-invocation: true
 
 Run a comprehensive code review on `$ARGUMENTS` (or the current branch if no arguments are provided), leveraging any available AI MCP servers for multi-perspective analysis.
 
-## Review Perspectives
+## The bar for every finding (read first)
 
-All AI engines share these review perspectives:
+Every finding you report MUST clear the bar in [refs/finding-bar.md](refs/finding-bar.md):
+**located** (`file:line`), **concretely fixable** (minimal suggested diff), **confident**
+(`high`/`medium` only — drop the rest), and **material** (correctness / security / data /
+spec / explicit convention — never pure style). Prefer **fewer, sharper findings**: ten
+line-anchored issues with fixes beat forty generic observations. This bar is what makes the
+review as pointed as an inline PR reviewer instead of a wall of advice.
+
+## What the review is built around
+
+The **spine** of this review is [refs/high-signal-checklist.md](refs/high-signal-checklist.md)
+— the concrete, recurring issues that automated PR reviewers (e.g. GitHub Copilot) flag and
+that generic "review for quality" prompts miss: spec↔code mismatch, enum/constant
+hardcoding, nil-on-nullable, time/range boundaries, get-or-insert races, missing indexes,
+XSS escaping, weak test assertions, message↔logic drift. Walking the diff against every
+category of that checklist is the **primary** job (Phase 3.b), and pre-empts the post-PR
+churn of fixing these one comment at a time.
+
+The perspectives below are **secondary lenses** — a coverage net so nothing whole-cloth is
+missed. They are necessary but not sufficient; do not let them turn the review into generic
+advice. Any finding from a lens still has to clear the finding bar.
 
 | Perspective | Details |
 |------------|---------|
@@ -27,14 +46,6 @@ All AI engines share these review perspectives:
 | Performance | Inefficient data fetching, memory leaks, unnecessary computation, algorithmic complexity |
 | Conventions | CLAUDE.md / AGENTS.md project convention compliance |
 | Consistency | PR description / commit messages / linked issue vs. the actual diff (claimed scope, definitions, DB impact, behavior all match the code) |
-
-> **These perspectives are necessary but not sufficient.** The specific, recurring findings
-> that automated PR reviewers (e.g. GitHub Copilot) flag — spec↔code mismatch, enum/constant
-> hardcoding, nil-on-nullable, time/range boundaries, get-or-insert races, missing indexes,
-> XSS escaping, weak test assertions — are operationalized in
-> [refs/high-signal-checklist.md](refs/high-signal-checklist.md). Applying that checklist is a
-> **required** part of Phase 3 (see 3.b). Catching these here is the whole point: it prevents
-> the post-PR review churn of fixing them one comment at a time.
 
 ## Phase 1: Collect Changes
 
@@ -89,6 +100,11 @@ Prepare the following context to pass to AI engines:
 
 Check your available tools for AI-powered MCP servers and dispatch reviews in parallel. Below are known integrations — use any that are available, and skip those that are not.
 
+Pass the **finding bar and the high-signal checklist into every dispatched prompt**, and
+require each engine to anchor findings to `file:line` with a minimal fix. An engine that
+returns generic prose without locations is producing noise — re-prompt it for located
+findings or discard its output.
+
 ### Codex — Architecture Review
 
 Check if `mcp__codex__spawn_agent` is available. If so, spawn an agent in background with the diff, file list, commit log, and conventions, instructing it to review from an **architecture** perspective (design patterns, SOLID principles, architectural consistency, separation of concerns, dependencies, scalability).
@@ -105,10 +121,11 @@ If other AI-capable MCP tools are available, dispatch additional review perspect
 
 Request each engine to return findings in this format:
 - **File**: path and line range
-- **Severity**: Critical / High / Medium / Low
-- **Category**: review perspective
-- **Finding**: what the issue is
-- **Recommendation**: how to fix it
+- **Severity**: Critical / High / Medium
+- **Category**: review perspective / checklist category
+- **Finding**: what is wrong (not what the code does)
+- **Fix**: the minimal concrete change (a diff if possible)
+- **Confidence**: high / medium
 
 **If no AI MCP servers are available**: Skip Phase 2. Claude performs a comprehensive review covering ALL perspectives in Phase 3.
 
@@ -116,28 +133,32 @@ Request each engine to return findings in this format:
 
 ### a. Integrate Phase 2 Results
 
-- Incorporate findings from any AI engines that returned results.
+- Incorporate findings from any AI engines that returned results — but **only those that
+  clear the finding bar.** Discard located-but-immaterial nits and unlocated prose.
 - **Consensus**: findings flagged by multiple engines → elevate priority.
 - **Conflicts**: if engines disagree, provide Claude's own assessment with reasoning.
 - **Gaps**: identify any perspectives not covered by Phase 2 and review those areas directly.
 
-### b. Claude's Own Review
+### b. Claude's Own Review — checklist-driven (the core pass)
 
-Whether or not Phase 2 ran, Claude reviews the changes with focus on:
+This is the primary pass. Do it whether or not Phase 2 ran.
 
-- **Convention compliance**: verify against CLAUDE.md / AGENTS.md rules
-- **Pattern consistency**: do changes follow existing codebase patterns?
-- **Integration risks**: how do changes interact with the rest of the system?
-- **Edge cases**: scenarios that automated tools commonly miss
+**Step 1 — Spec ↔ implementation table (checklist category A).** Take each factual claim in
+the captured intent (PR/commit/issue) and point at the line that proves or contradicts it.
+Emit the claim-by-claim table from the report template (`Claim | file:line | VERIFIED /
+MISMATCH`) **before** anything else. A MISMATCH that ships wrong behavior is Critical.
 
-**Required: apply the high-signal checklist.** Walk the diff against **every** category in
-[refs/high-signal-checklist.md](refs/high-signal-checklist.md) — A. spec↔code consistency,
-B. enum/constant hardcoding, C. nil/nullable, D. time & range boundaries, E. concurrency &
+**Step 2 — Walk every checklist category against the diff.** Go through
+[refs/high-signal-checklist.md](refs/high-signal-checklist.md) categories B–I in order — B.
+enum/constant hardcoding, C. nil/nullable, D. time & range boundaries, E. concurrency &
 idempotency, F. indexes & query efficiency, G. web security & a11y, H. test rigor, I.
-message/i18n↔logic. Do not skim: for category A, take each claim in the captured intent and
-point at the line that proves or contradicts it. Report each hit as a finding with file,
-line, severity, and a concrete fix. This is the part of the review that pre-empts the
-findings an automated PR reviewer would otherwise post.
+message/i18n↔logic. Do not skim. For each category, either emit located findings or write
+"clear". Each finding gets `file:line`, severity, confidence, and a minimal-diff fix.
+
+**Step 3 — Secondary lenses.** Sweep the perspectives table for anything the checklist
+didn't cover (architecture fit, integration risks, convention compliance, edge cases the
+checklist doesn't enumerate). Same bar applies — located, fixable, material, or it doesn't
+ship.
 
 ### c. Auto-Detect and Run Quality Gates
 
@@ -153,25 +174,37 @@ Auto-detect the project's test, lint, and type-check commands from configuration
 
 ## Output
 
-Generate the review report following [refs/report-template.md](refs/report-template.md) with:
+Report findings the way an inline PR reviewer does — located, minimal, actionable —
+following [refs/report-template.md](refs/report-template.md). Print the report directly to
+the conversation. Do not create a file unless the user requests it.
 
-- Summary of changes and AI engines used
-- Architecture review findings
-- Code quality, security, and test coverage findings
-- Integrated assessment with critical issues highlighted
-- Quality gate results
-- Prioritized action items
+Each finding is one block (outer fence shown with four backticks so the inner diff renders):
+
+````
+[Severity] path/to/file.rb:42 — one-line statement of the problem · category · confidence: high
+
+Why it's wrong: one or two concrete sentences — what breaks, under what input/timing.
+
+```diff
+- offending line
++ minimal fix
+```
+````
+
+- Lead with `file:line`. One finding = one location + one fix. The diff must be minimal —
+  change only what the finding requires.
+- Group findings Critical → High → Medium, then by file. **Below Medium is not reported.**
+- For a design-level issue with no safe one-line fix, replace the diff with the smallest
+  concrete next step and say why a patch isn't given.
+- Always include the spec↔implementation table before the findings.
+- No "general suggestions" / "keep in mind" section. If it has no line, it is not a finding.
 
 ### Severity Levels
 
-- **Critical**: Must fix before merge (security, data loss, breaking changes)
-- **High**: Should fix before merge (bugs, convention violations)
-- **Medium**: Recommended improvement (readability, maintainability)
-- **Low**: Optional suggestion (style, optimization)
-
-Print the report directly to the conversation. Do not create a file unless the user requests it.
+- **Critical**: Must fix before merge (security, data loss, breaking change, a spec mismatch that ships wrong behavior)
+- **High**: Should fix before merge (bug, convention violation, missing index on a filtered/sorted column, weak test that passes while broken)
+- **Medium**: Worth fixing, with a concrete fix (maintainability, a non-blocking checklist hit). Anything below Medium is dropped, not downgraded.
 
 ## Notes
 
 - Always run quality gates regardless of change size
-
