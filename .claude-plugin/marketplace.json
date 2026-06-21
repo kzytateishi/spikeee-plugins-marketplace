@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Custom marketplace for Claude Code plugins by spikeee.",
-    "version": "1.2.0"
+    "version": "1.2.1"
   },
   "plugins": [
     {
